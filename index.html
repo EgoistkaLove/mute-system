@@ -4,16 +4,43 @@
     <meta charset="UTF-8">
     <title>Игроки проекта</title>
     <style>
-       body {
-    font-family: Arial, sans-serif;
-    background-image: url("https://gifs.obs.ru-moscow-1.hc.sbercloud.ru/846b1c48086cc35f310f6ef3fce9fa263df01dd6e5632872af7d9968ee94b114.webp");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: #fff;
-    padding: 20px;
-}
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .add-player {
+            max-width: 400px;
+            margin: 0 auto 20px;
+            background: #2b2b2b;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .add-player input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .add-player button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #4caf50;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+        }
 
         .players {
             display: flex;
@@ -24,24 +51,22 @@
 
         .profile {
             background: #2b2b2b;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
-            width: 300px;
+            width: 280px;
             text-align: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
         .profile-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 10px;
         }
 
         .avatar {
-            width: 56px;
-            height: 56px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #ff4d4d;
@@ -49,12 +74,12 @@
 
         .mute-btn {
             margin-top: 10px;
-            padding: 8px 15px;
+            padding: 7px 14px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
             background: #ff4d4d;
             color: white;
+            cursor: pointer;
         }
 
         .mute-btn:disabled {
@@ -63,12 +88,12 @@
         }
 
         .counter {
-            margin-top: 10px;
+            margin-top: 8px;
             font-size: 14px;
         }
 
         .ban-message {
-            margin-top: 10px;
+            margin-top: 8px;
             padding: 8px;
             background: #ff3333;
             border-radius: 5px;
@@ -79,112 +104,126 @@
         .timer {
             margin-top: 5px;
             font-size: 12px;
-            color: #ffe0e0;
         }
-        .overlay {
-    background: rgba(0, 0, 0, 0.6);
-    min-height: 100vh;
-    padding: 20px;
-}
     </style>
 </head>
 <body>
-<div class="overlay">
-<h1 style="text-align:center;">Игроки проекта</h1>
+
+<h1>Игроки проекта</h1>
+
+<div class="add-player">
+    <input type="text" id="nickname" placeholder="Ник игрока">
+    <input type="text" id="avatarUrl" placeholder="URL аватарки">
+    <button onclick="addPlayer()">Добавить игрока</button>
+</div>
 
 <div class="players" id="players"></div>
 
 <script>
-    const playersData = [
-        {
-            name: "El1s",
-            avatar: "https://avatars.akamai.steamstatic.com/4f1d1ae27002047d4b51f2cb4e9bcbae36744cb5_full.jpg"
-        },
-        {
-            name: "LucKy",
-            avatar: "https://avatars.akamai.steamstatic.com/a40c99f0dee28e6b2976b3827d75d4ee4d5018de_full.jpg"
-        },
-        {
-            name: "𓆩❤𓆪",
-            avatar: "https://avatars.akamai.steamstatic.com/8bf5b67ceec88820ce5d9d14a022026f4757189c_full.jpg"
-        }
-    ];
-
     const playersContainer = document.getElementById("players");
+    let players = JSON.parse(localStorage.getItem("players")) || [];
 
-    playersData.forEach((player, index) => {
-        const profile = document.createElement("div");
-        profile.className = "profile";
+    function savePlayers() {
+        localStorage.setItem("players", JSON.stringify(players));
+    }
 
-        profile.innerHTML = `
-            <div class="profile-header">
-                <img class="avatar" src="${player.avatar}">
-                <h3>${player.name}</h3>
-            </div>
+    function renderPlayers() {
+        playersContainer.innerHTML = "";
 
-            <button class="mute-btn">Выдать мут</button>
+        players.forEach((player, index) => {
+            const profile = document.createElement("div");
+            profile.className = "profile";
 
-            <div class="counter">
-                Муты: <span class="mute-count">0</span>
-            </div>
+            profile.innerHTML = `
+                <div class="profile-header">
+                    <img class="avatar" src="${player.avatar}">
+                    <h3>${player.name}</h3>
+                </div>
 
-            <div class="ban-message">
-                Вам выдали бан за неадекватное поведение на проекте,
-                подумайте о своем поведении!Негодяй!
-                <div class="timer"></div>
-            </div>
-        `;
+                <button class="mute-btn">Выдать мут</button>
 
-        playersContainer.appendChild(profile);
+                <div class="counter">
+                    Муты: <span class="mute-count">${player.mutes}</span>
+                </div>
 
-        let muteCount = 0;
-        let banEndTime = null;
-        let interval = null;
+                <div class="ban-message">
+                    Вам выдали бан за неадекватное поведение на проекте,
+                    подумайте о своем поведении! Негодяй!!!
+                    <div class="timer"></div>
+                </div>
+            `;
 
-        const muteBtn = profile.querySelector(".mute-btn");
-        const muteCountEl = profile.querySelector(".mute-count");
-        const banMessage = profile.querySelector(".ban-message");
-        const timerEl = profile.querySelector(".timer");
+            playersContainer.appendChild(profile);
 
-        muteBtn.addEventListener("click", () => {
-            muteCount++;
-            muteCountEl.textContent = muteCount;
+            const muteBtn = profile.querySelector(".mute-btn");
+            const muteCountEl = profile.querySelector(".mute-count");
+            const banMessage = profile.querySelector(".ban-message");
+            const timerEl = profile.querySelector(".timer");
 
-            if (muteCount % 3 === 0) {
-                startBan();
+            function updateTimer() {
+                const remaining = player.banEnd - Date.now();
+
+                if (remaining <= 0) {
+                    player.banEnd = null;
+                    muteBtn.disabled = false;
+                    banMessage.style.display = "none";
+                    savePlayers();
+                    return;
+                }
+
+                muteBtn.disabled = true;
+                banMessage.style.display = "block";
+
+                const h = Math.floor(remaining / (1000 * 60 * 60));
+                const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((remaining % (1000 * 60)) / 1000);
+
+                timerEl.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
             }
+
+            if (player.banEnd) {
+                setInterval(updateTimer, 1000);
+            }
+
+            muteBtn.addEventListener("click", () => {
+                player.mutes++;
+                muteCountEl.textContent = player.mutes;
+
+                if (player.mutes % 3 === 0) {
+                    player.banEnd = Date.now() + 12 * 60 * 60 * 1000;
+                    setInterval(updateTimer, 1000);
+                }
+
+                savePlayers();
+            });
+        });
+    }
+
+    function addPlayer() {
+        const name = document.getElementById("nickname").value.trim();
+        const avatar = document.getElementById("avatarUrl").value.trim();
+
+        if (!name || !avatar) {
+            alert("Введите ник и ссылку на аватарку");
+            return;
+        }
+
+        players.push({
+            name,
+            avatar,
+            mutes: 0,
+            banEnd: null
         });
 
-        function startBan() {
-            const banDuration = 12 * 60 * 60 * 1000;
-            banEndTime = Date.now() + banDuration;
+        savePlayers();
+        renderPlayers();
 
-            muteBtn.disabled = true;
-            banMessage.style.display = "block";
+        document.getElementById("nickname").value = "";
+        document.getElementById("avatarUrl").value = "";
+    }
 
-            interval = setInterval(updateTimer, 1000);
-        }
-
-        function updateTimer() {
-            const remaining = banEndTime - Date.now();
-
-            if (remaining <= 0) {
-                clearInterval(interval);
-                banMessage.style.display = "none";
-                muteBtn.disabled = false;
-                banEndTime = null;
-                return;
-            }
-
-            const h = Math.floor(remaining / (1000 * 60 * 60));
-            const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((remaining % (1000 * 60)) / 1000);
-
-            timerEl.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
-        }
-    });
+    renderPlayers();
 </script>
-</div>
+
 </body>
 </html>
-
