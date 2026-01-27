@@ -18,13 +18,29 @@
             background: #2b2b2b;
             padding: 25px;
             border-radius: 10px;
-            width: 350px;
+            width: 360px;
             text-align: center;
             box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
 
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ff4d4d;
+        }
+
         .profile h2 {
-            margin-bottom: 10px;
+            margin: 0;
         }
 
         .mute-btn {
@@ -66,7 +82,14 @@
 <body>
 
 <div class="profile">
-    <h2>Игрок: Obamka63</h2>
+    <div class="profile-header">
+        <img
+            class="avatar"
+            src="https://i.pinimg.com/736x/fc/01/2e/fc012e328d08d4ac0e7bf0aa628bb795.jpg"
+            alt="Аватар игрока"
+        >
+        <h2>As1d</h2>
+    </div>
 
     <button class="mute-btn" id="muteBtn">Выдать мут</button>
 
@@ -124,7 +147,8 @@
             const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
 
-            banTimer.textContent = `До окончания бана: ${hours}ч ${minutes}м ${seconds}с`;
+            banTimer.textContent =
+                `До окончания бана: ${hours}ч ${minutes}м ${seconds}с`;
         }, 1000);
     }
 </script>
