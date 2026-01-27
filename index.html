@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <title>Игроки проекта</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #1e1e1e;
-            color: #fff;
-            padding: 20px;
-        }
+       body {
+    font-family: Arial, sans-serif;
+    background-image: url("https://gifs.obs.ru-moscow-1.hc.sbercloud.ru/846b1c48086cc35f310f6ef3fce9fa263df01dd6e5632872af7d9968ee94b114.webp");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #fff;
+    padding: 20px;
+}
 
         .players {
             display: flex;
@@ -77,10 +81,15 @@
             font-size: 12px;
             color: #ffe0e0;
         }
+        .overlay {
+    background: rgba(0, 0, 0, 0.6);
+    min-height: 100vh;
+    padding: 20px;
+}
     </style>
 </head>
 <body>
-
+<div class="overlay">
 <h1 style="text-align:center;">Игроки проекта</h1>
 
 <div class="players" id="players"></div>
@@ -175,6 +184,7 @@
         }
     });
 </script>
-
+</div>
 </body>
 </html>
+
