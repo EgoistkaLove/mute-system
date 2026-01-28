@@ -117,7 +117,6 @@ h1 { text-align: center; }
 <div class="players" id="players"></div>
 
 <script>
-/* 🔑 ВСТАВЬ СВОИ ДАННЫЕ SUPABASE */
 const supabase = window.supabase.createClient(
     "https://bhkuhygxynltevnagwbs.supabase.co",
     "sb_publishable_gxHDoyOaiUnoyKaIOK9eWw_lcem_lmO"
@@ -127,13 +126,17 @@ const playersContainer = document.getElementById("players");
 
 /* ЗАГРУЗКА ИГРОКОВ */
 async function loadPlayers() {
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("players")
         .select("*")
         .order("id", { ascending: false });
 
-    playersContainer.innerHTML = "";
+    if (error) {
+        console.error("Ошибка загрузки игроков:", error);
+        return;
+    }
 
+    playersContainer.innerHTML = "";
     data.forEach(renderPlayer);
 }
 
@@ -155,8 +158,8 @@ function renderPlayer(player) {
         </div>
 
         <div class="ban-message">
-            Бан за П.П. 2.2 
-            Подумай о своем поведении. Негодяй!
+            Бан за П.П. 2.2<br>
+            Подумай о своем поведении. Негодяй!<br>
             Или испытай удачу...
             <div class="timer"></div>
         </div>
@@ -183,10 +186,15 @@ function renderPlayer(player) {
             banEnd = Date.now() + 12 * 60 * 60 * 1000;
         }
 
-        await supabase.from("players").update({
-            mutes: newMutes,
-            ban_end: banEnd
-        }).eq("id", player.id);
+        const { error } = await supabase
+            .from("players")
+            .update({ mutes: newMutes, ban_end: banEnd })
+            .eq("id", player.id);
+
+        if (error) {
+            console.error("Ошибка обновления:", error);
+            return;
+        }
 
         loadPlayers();
     };
@@ -217,15 +225,23 @@ async function addPlayer() {
     const name = nickname.value.trim();
     const avatar = avatarUrl.value.trim();
 
-    if (!name || !avatar) return alert("Заполните все поля");
+    if (!name || !avatar) {
+        alert("Заполните все поля");
+        return;
+    }
 
-    await supabase.from("players").insert({
+    const { error } = await supabase.from("players").insert({
         id: Date.now(),
         name,
         avatar,
         mutes: 0,
         ban_end: null
     });
+
+    if (error) {
+        console.error("Ошибка добавления:", error);
+        return;
+    }
 
     nickname.value = "";
     avatarUrl.value = "";
@@ -238,3 +254,4 @@ loadPlayers();
 
 </body>
 </html>
+
