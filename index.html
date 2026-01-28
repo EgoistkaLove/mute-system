@@ -87,8 +87,6 @@ h1 { text-align: center; }
     cursor: not-allowed;
 }
 
-.counter { margin-top: 8px; }
-
 .ban-message {
     margin-top: 8px;
     padding: 8px;
@@ -111,114 +109,23 @@ h1 { text-align: center; }
 <div class="add-player">
     <input id="nickname" placeholder="Ник игрока">
     <input id="avatarUrl" placeholder="URL аватарки">
-    <button onclick="addPlayer()">Добавить игрока</button>
+    <button id="addPlayerBtn">Добавить игрока</button>
 </div>
 
 <div class="players" id="players"></div>
 
 <script>
+/* SUPABASE */
 const supabase = window.supabase.createClient(
     "https://bhkuhygxynltevnagwbs.supabase.co",
     "sb_publishable_gxHDoyOaiUnoyKaIOK9eWw_lcem_lmO"
 );
 
 const playersContainer = document.getElementById("players");
+const addBtn = document.getElementById("addPlayerBtn");
 
-/* ЗАГРУЗКА ИГРОКОВ */
-async function loadPlayers() {
-    const { data, error } = await supabase
-        .from("players")
-        .select("*")
-        .order("id", { ascending: false });
-
-    if (error) {
-        console.error("Ошибка загрузки игроков:", error);
-        return;
-    }
-
-    playersContainer.innerHTML = "";
-    data.forEach(renderPlayer);
-}
-
-/* ОТРИСОВКА ИГРОКА */
-function renderPlayer(player) {
-    const profile = document.createElement("div");
-    profile.className = "profile";
-
-    profile.innerHTML = `
-        <div class="profile-header">
-            <img class="avatar" src="${player.avatar}">
-            <h3>${player.name}</h3>
-        </div>
-
-        <button class="mute-btn">Выдать мут</button>
-
-        <div class="counter">
-            Муты: <span>${player.mutes}</span>
-        </div>
-
-        <div class="ban-message">
-            Бан за П.П. 2.2<br>
-            Подумай о своем поведении. Негодяй!<br>
-            Или испытай удачу...
-            <div class="timer"></div>
-        </div>
-    `;
-
-    playersContainer.appendChild(profile);
-
-    const muteBtn = profile.querySelector(".mute-btn");
-    const counter = profile.querySelector("span");
-    const banMessage = profile.querySelector(".ban-message");
-    const timer = profile.querySelector(".timer");
-
-    if (player.ban_end && player.ban_end > Date.now()) {
-        muteBtn.disabled = true;
-        banMessage.style.display = "block";
-        startTimer(player, timer, muteBtn, banMessage);
-    }
-
-    muteBtn.onclick = async () => {
-        const newMutes = player.mutes + 1;
-        let banEnd = player.ban_end;
-
-        if (newMutes % 3 === 0) {
-            banEnd = Date.now() + 12 * 60 * 60 * 1000;
-        }
-
-        const { error } = await supabase
-            .from("players")
-            .update({ mutes: newMutes, ban_end: banEnd })
-            .eq("id", player.id);
-
-        if (error) {
-            console.error("Ошибка обновления:", error);
-            return;
-        }
-
-        loadPlayers();
-    };
-}
-
-/* ТАЙМЕР БАНА */
-function startTimer(player, timer, button, message) {
-    const interval = setInterval(() => {
-        const left = player.ban_end - Date.now();
-
-        if (left <= 0) {
-            clearInterval(interval);
-            button.disabled = false;
-            message.style.display = "none";
-            return;
-        }
-
-        const h = Math.floor(left / 3600000);
-        const m = Math.floor((left % 3600000) / 60000);
-        const s = Math.floor((left % 60000) / 1000);
-
-        timer.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
-    }, 1000);
-}
+/* КНОПКА */
+addBtn.addEventListener("click", addPlayer);
 
 /* ДОБАВЛЕНИЕ ИГРОКА */
 async function addPlayer() {
@@ -242,8 +149,8 @@ async function addPlayer() {
     });
 
     if (error) {
-        console.error("Ошибка Supabase:", error);
-        alert("Ошибка при добавлении игрока. Проверь RLS.");
+        console.error(error);
+        alert("Ошибка Supabase (проверь RLS)");
         return;
     }
 
@@ -253,10 +160,94 @@ async function addPlayer() {
     loadPlayers();
 }
 
+/* ЗАГРУЗКА ИГРОКОВ */
+async function loadPlayers() {
+    const { data, error } = await supabase
+        .from("players")
+        .select("*")
+        .order("id", { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    playersContainer.innerHTML = "";
+    data.forEach(renderPlayer);
+}
+
+/* ОТРИСОВКА */
+function renderPlayer(player) {
+    const div = document.createElement("div");
+    div.className = "profile";
+
+    div.innerHTML = `
+        <div class="profile-header">
+            <img class="avatar" src="${player.avatar}">
+            <h3>${player.name}</h3>
+        </div>
+
+        <button class="mute-btn">Выдать мут</button>
+
+        <div>Муты: <span>${player.mutes}</span></div>
+
+        <div class="ban-message">
+            Вам выдался бан за неадекватное поведение.<br>
+            Подумайте о своём поведении.
+            <div class="timer"></div>
+        </div>
+    `;
+
+    playersContainer.appendChild(div);
+
+    const muteBtn = div.querySelector(".mute-btn");
+    const banMessage = div.querySelector(".ban-message");
+    const timer = div.querySelector(".timer");
+
+    if (player.ban_end && player.ban_end > Date.now()) {
+        muteBtn.disabled = true;
+        banMessage.style.display = "block";
+        startTimer(player, timer, muteBtn, banMessage);
+    }
+
+    muteBtn.onclick = async () => {
+        const newMutes = player.mutes + 1;
+        let banEnd = player.ban_end;
+
+        if (newMutes % 3 === 0) {
+            banEnd = Date.now() + 12 * 60 * 60 * 1000;
+        }
+
+        await supabase.from("players")
+            .update({ mutes: newMutes, ban_end: banEnd })
+            .eq("id", player.id);
+
+        loadPlayers();
+    };
+}
+
+/* ТАЙМЕР */
+function startTimer(player, timer, button, message) {
+    const interval = setInterval(() => {
+        const left = player.ban_end - Date.now();
+
+        if (left <= 0) {
+            clearInterval(interval);
+            button.disabled = false;
+            message.style.display = "none";
+            return;
+        }
+
+        const h = Math.floor(left / 3600000);
+        const m = Math.floor((left % 3600000) / 60000);
+        const s = Math.floor((left % 60000) / 1000);
+
+        timer.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
+    }, 1000);
+}
+
 loadPlayers();
 </script>
 
 </body>
 </html>
-
-
