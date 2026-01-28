@@ -1,228 +1,239 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Игроки проекта</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #1e1e1e;
-            color: #fff;
-            padding: 20px;
-        }
+<meta charset="UTF-8">
+<title>Игроки проекта</title>
 
-        h1 {
-            text-align: center;
-        }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        .add-player {
-            max-width: 400px;
-            margin: 0 auto 20px;
-            background: #2b2b2b;
-            padding: 15px;
-            border-radius: 10px;
-        }
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #1e1e1e;
+    color: #fff;
+    padding: 20px;
+}
 
-        .add-player input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: none;
-        }
+h1 { text-align: center; }
 
-        .add-player button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: #4caf50;
-            color: white;
-            cursor: pointer;
-            font-size: 15px;
-        }
+.add-player {
+    max-width: 400px;
+    margin: 0 auto 20px;
+    background: #2b2b2b;
+    padding: 15px;
+    border-radius: 10px;
+}
 
-        .players {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+.add-player input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: none;
+}
 
-        .profile {
-            background: #2b2b2b;
-            padding: 15px;
-            border-radius: 10px;
-            width: 280px;
-            text-align: center;
-        }
+.add-player button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+}
 
-        .profile-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+.players {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
 
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ff4d4d;
-        }
+.profile {
+    background: #2b2b2b;
+    padding: 15px;
+    border-radius: 10px;
+    width: 280px;
+    text-align: center;
+}
 
-        .mute-btn {
-            margin-top: 10px;
-            padding: 7px 14px;
-            border: none;
-            border-radius: 5px;
-            background: #ff4d4d;
-            color: white;
-            cursor: pointer;
-        }
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
 
-        .mute-btn:disabled {
-            background: gray;
-            cursor: not-allowed;
-        }
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ff4d4d;
+}
 
-        .counter {
-            margin-top: 8px;
-            font-size: 14px;
-        }
+.mute-btn {
+    margin-top: 10px;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 5px;
+    background: #ff4d4d;
+    color: white;
+    cursor: pointer;
+}
 
-        .ban-message {
-            margin-top: 8px;
-            padding: 8px;
-            background: #ff3333;
-            border-radius: 5px;
-            display: none;
-            font-size: 13px;
-        }
+.mute-btn:disabled {
+    background: gray;
+    cursor: not-allowed;
+}
 
-        .timer {
-            margin-top: 5px;
-            font-size: 12px;
-        }
-    </style>
+.counter { margin-top: 8px; }
+
+.ban-message {
+    margin-top: 8px;
+    padding: 8px;
+    background: #ff3333;
+    border-radius: 5px;
+    display: none;
+    font-size: 13px;
+}
+
+.timer {
+    margin-top: 5px;
+    font-size: 12px;
+}
+</style>
 </head>
 <body>
 
 <h1>Игроки проекта</h1>
 
 <div class="add-player">
-    <input type="text" id="nickname" placeholder="Ник игрока">
-    <input type="text" id="avatarUrl" placeholder="URL аватарки">
+    <input id="nickname" placeholder="Ник игрока">
+    <input id="avatarUrl" placeholder="URL аватарки">
     <button onclick="addPlayer()">Добавить игрока</button>
 </div>
 
 <div class="players" id="players"></div>
 
 <script>
-    const playersContainer = document.getElementById("players");
-    let players = JSON.parse(localStorage.getItem("players")) || [];
+/* 🔑 ВСТАВЬ СВОИ ДАННЫЕ SUPABASE */
+const supabase = window.supabase.createClient(
+    "https://bhkuhygxynltevnagwbs.supabase.co",
+    "sb_publishable_gxHDoyOaiUnoyKaIOK9eWw_lcem_lmO"
+);
 
-    function savePlayers() {
-        localStorage.setItem("players", JSON.stringify(players));
+const playersContainer = document.getElementById("players");
+
+/* ЗАГРУЗКА ИГРОКОВ */
+async function loadPlayers() {
+    const { data } = await supabase
+        .from("players")
+        .select("*")
+        .order("id", { ascending: false });
+
+    playersContainer.innerHTML = "";
+
+    data.forEach(renderPlayer);
+}
+
+/* ОТРИСОВКА ИГРОКА */
+function renderPlayer(player) {
+    const profile = document.createElement("div");
+    profile.className = "profile";
+
+    profile.innerHTML = `
+        <div class="profile-header">
+            <img class="avatar" src="${player.avatar}">
+            <h3>${player.name}</h3>
+        </div>
+
+        <button class="mute-btn">Выдать мут</button>
+
+        <div class="counter">
+            Муты: <span>${player.mutes}</span>
+        </div>
+
+        <div class="ban-message">
+            Бан за П.П. 2.2 
+            Подумай о своем поведении. Негодяй!
+            Или испытай удачу...
+            <div class="timer"></div>
+        </div>
+    `;
+
+    playersContainer.appendChild(profile);
+
+    const muteBtn = profile.querySelector(".mute-btn");
+    const counter = profile.querySelector("span");
+    const banMessage = profile.querySelector(".ban-message");
+    const timer = profile.querySelector(".timer");
+
+    if (player.ban_end && player.ban_end > Date.now()) {
+        muteBtn.disabled = true;
+        banMessage.style.display = "block";
+        startTimer(player, timer, muteBtn, banMessage);
     }
 
-    function renderPlayers() {
-        playersContainer.innerHTML = "";
+    muteBtn.onclick = async () => {
+        const newMutes = player.mutes + 1;
+        let banEnd = player.ban_end;
 
-        players.forEach((player, index) => {
-            const profile = document.createElement("div");
-            profile.className = "profile";
+        if (newMutes % 3 === 0) {
+            banEnd = Date.now() + 12 * 60 * 60 * 1000;
+        }
 
-            profile.innerHTML = `
-                <div class="profile-header">
-                    <img class="avatar" src="${player.avatar}">
-                    <h3>${player.name}</h3>
-                </div>
+        await supabase.from("players").update({
+            mutes: newMutes,
+            ban_end: banEnd
+        }).eq("id", player.id);
 
-                <button class="mute-btn">Выдать мут</button>
+        loadPlayers();
+    };
+}
 
-                <div class="counter">
-                    Муты: <span class="mute-count">${player.mutes}</span>
-                </div>
+/* ТАЙМЕР БАНА */
+function startTimer(player, timer, button, message) {
+    const interval = setInterval(() => {
+        const left = player.ban_end - Date.now();
 
-                <div class="ban-message">
-                    Вам выдали бан за неадекватное поведение на проекте,
-                    подумайте о своем поведении! Негодяй!!!
-                    <div class="timer"></div>
-                </div>
-            `;
-
-            playersContainer.appendChild(profile);
-
-            const muteBtn = profile.querySelector(".mute-btn");
-            const muteCountEl = profile.querySelector(".mute-count");
-            const banMessage = profile.querySelector(".ban-message");
-            const timerEl = profile.querySelector(".timer");
-
-            function updateTimer() {
-                const remaining = player.banEnd - Date.now();
-
-                if (remaining <= 0) {
-                    player.banEnd = null;
-                    muteBtn.disabled = false;
-                    banMessage.style.display = "none";
-                    savePlayers();
-                    return;
-                }
-
-                muteBtn.disabled = true;
-                banMessage.style.display = "block";
-
-                const h = Math.floor(remaining / (1000 * 60 * 60));
-                const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((remaining % (1000 * 60)) / 1000);
-
-                timerEl.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
-            }
-
-            if (player.banEnd) {
-                setInterval(updateTimer, 1000);
-            }
-
-            muteBtn.addEventListener("click", () => {
-                player.mutes++;
-                muteCountEl.textContent = player.mutes;
-
-                if (player.mutes % 3 === 0) {
-                    player.banEnd = Date.now() + 12 * 60 * 60 * 1000;
-                    setInterval(updateTimer, 1000);
-                }
-
-                savePlayers();
-            });
-        });
-    }
-
-    function addPlayer() {
-        const name = document.getElementById("nickname").value.trim();
-        const avatar = document.getElementById("avatarUrl").value.trim();
-
-        if (!name || !avatar) {
-            alert("Введите ник и ссылку на аватарку");
+        if (left <= 0) {
+            clearInterval(interval);
+            button.disabled = false;
+            message.style.display = "none";
             return;
         }
 
-        players.push({
-            name,
-            avatar,
-            mutes: 0,
-            banEnd: null
-        });
+        const h = Math.floor(left / 3600000);
+        const m = Math.floor((left % 3600000) / 60000);
+        const s = Math.floor((left % 60000) / 1000);
 
-        savePlayers();
-        renderPlayers();
+        timer.textContent = `До конца бана: ${h}ч ${m}м ${s}с`;
+    }, 1000);
+}
 
-        document.getElementById("nickname").value = "";
-        document.getElementById("avatarUrl").value = "";
-    }
+/* ДОБАВЛЕНИЕ ИГРОКА */
+async function addPlayer() {
+    const name = nickname.value.trim();
+    const avatar = avatarUrl.value.trim();
 
-    renderPlayers();
+    if (!name || !avatar) return alert("Заполните все поля");
+
+    await supabase.from("players").insert({
+        id: Date.now(),
+        name,
+        avatar,
+        mutes: 0,
+        ban_end: null
+    });
+
+    nickname.value = "";
+    avatarUrl.value = "";
+
+    loadPlayers();
+}
+
+loadPlayers();
 </script>
 
 </body>
