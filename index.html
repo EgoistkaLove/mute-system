@@ -222,8 +222,11 @@ function startTimer(player, timer, button, message) {
 
 /* ДОБАВЛЕНИЕ ИГРОКА */
 async function addPlayer() {
-    const name = nickname.value.trim();
-    const avatar = avatarUrl.value.trim();
+    const nicknameInput = document.getElementById("nickname");
+    const avatarInput = document.getElementById("avatarUrl");
+
+    const name = nicknameInput.value.trim();
+    const avatar = avatarInput.value.trim();
 
     if (!name || !avatar) {
         alert("Заполните все поля");
@@ -239,12 +242,13 @@ async function addPlayer() {
     });
 
     if (error) {
-        console.error("Ошибка добавления:", error);
+        console.error("Ошибка Supabase:", error);
+        alert("Ошибка при добавлении игрока. Проверь RLS.");
         return;
     }
 
-    nickname.value = "";
-    avatarUrl.value = "";
+    nicknameInput.value = "";
+    avatarInput.value = "";
 
     loadPlayers();
 }
@@ -254,4 +258,5 @@ loadPlayers();
 
 </body>
 </html>
+
 
